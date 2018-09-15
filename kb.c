@@ -50,6 +50,11 @@ unsigned char kbdus[128] =
     0,	/* All other keys are undefined */
 };
 
+// Mask of some key values, & with some hex value to get the meaning of each bit
+// 0x01 - left shift
+// 0x03 - caps down
+unsigned int keysMask = 0;
+
 /* Handles the keyboard interrupt */
 void keyboard_handler(struct regs *r)
 {
@@ -60,6 +65,9 @@ void keyboard_handler(struct regs *r)
 
     /* If the top bit of the byte we read from the keyboard is
     *  set, that means that a key has just been released */
+
+    printNumber(scancode);
+
     if (scancode & 0x80)
     {
         /* You can use this one to see if the user released the

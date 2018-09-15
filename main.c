@@ -53,13 +53,14 @@ void main()
     isrs_install();
     irq_install();
     init_video();
-    //timer_install();
+    // Set the freq
+    timer_install(100);
     keyboard_install();
-
+    
     __asm__ __volatile__ ("sti");
 
-    puts("Hello World!\n");
-
+    puts("Hello Motherfucker!\n");
+    beep();
 //    i = 10 / 0;
 //    putch(i);
 

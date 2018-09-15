@@ -147,6 +147,50 @@ void puts(unsigned char *text)
     }
 }
 
+/* Print numbers */ 
+void printNumber(int number) 
+{
+    char isNegative = number < 0;
+
+    if (isNegative)
+        number = - number;
+
+    int numberCopy = number;
+    int digitNumber = 0;
+    
+    while (numberCopy != 0)
+    {
+        numberCopy /= 10;
+        ++digitNumber;
+    }
+
+    if (digitNumber == 0)
+    {    
+        putch('0');
+        return;
+    }
+
+    unsigned char digits[20];
+
+    if (!isNegative)
+        --digitNumber;
+    else 
+        digits[0] = '-';
+
+    digits[digitNumber + 1] = '\0';
+
+    numberCopy = number;
+
+    while (numberCopy != 0) 
+    {
+        int digit = numberCopy % 10;
+        numberCopy /= 10;
+        digits[digitNumber--] = '0' + digit;
+    }
+
+    puts(digits);
+}
+
 /* Sets the forecolor and backcolor that we will use */
 void settextcolor(unsigned char forecolor, unsigned char backcolor)
 {

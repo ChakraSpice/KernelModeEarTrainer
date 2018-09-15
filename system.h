@@ -30,6 +30,7 @@ extern void init_video(void);
 extern void puts(unsigned char *text);
 extern void putch(unsigned char c);
 extern void cls();
+extern void printNumber(int number);
 
 /* GDT.C */
 extern void gdt_set_gate(int num, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran);
@@ -49,9 +50,13 @@ extern void irq_install();
 
 /* TIMER.C */
 extern void timer_wait(int ticks);
-extern void timer_install();
+extern void timer_install(int hz);
+extern void timer_phase(int hz);
 
 /* KEYBOARD.C */
 extern void keyboard_install();
+
+/* PCSPEAKER.C */
+extern void beep();
 
 #endif

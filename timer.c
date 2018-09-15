@@ -8,6 +8,16 @@
 /* This will keep track of how many ticks that the system
 *  has been running for */
 int timer_ticks = 0;
+int timer_freq = 18; // Default, can change 
+// Sets the phase of the timer. 
+void timer_phase(int hz)
+{
+    timer_freq = hz;
+    int divisor = 1193180 / timer_freq;       /* Calculate our divisor */
+    outportb(0x43, 0x36);             /* Set our command byte 0x36 */
+    outportb(0x40, divisor & 0xFF);   /* Set low byte of divisor */
+    outportb(0x40, divisor >> 8);     /* Set high byte of divisor */
+}
 
 /* Handles the timer. In this case, it's very simple: We
 *  increment the 'timer_ticks' variable every time the
@@ -21,7 +31,7 @@ void timer_handler(struct regs *r)
 
     /* Every 18 clocks (approximately 1 second), we will
     *  display a message on the screen */
-    if (timer_ticks % 18 == 0)
+    if (timer_ticks % timer_freq == 0)
     {
         puts("One second has passed\n");
     }
@@ -39,8 +49,9 @@ void timer_wait(int ticks)
 
 /* Sets up the system clock by installing the timer handler
 *  into IRQ0 */
-void timer_install()
+void timer_install(int hz)
 {
+    timer_phase(hz);
     /* Installs 'timer_handler' to IRQ0 */
     irq_install_handler(0, timer_handler);
 }
