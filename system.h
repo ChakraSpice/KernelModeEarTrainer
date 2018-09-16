@@ -52,11 +52,18 @@ extern void irq_install();
 extern void timer_wait(int ticks);
 extern void timer_install(int hz);
 extern void timer_phase(int hz);
+extern void setBeep();
 
 /* KEYBOARD.C */
 extern void keyboard_install();
 
 /* PCSPEAKER.C */
-extern void beep();
+extern void playFreqForTime(int* freqsToPlay, int* lengthsToPlay, int arrLength, int pauseTime);
+extern void nosound();
+extern void play_sound(int nFrequence);
+
+extern const int A;
+extern const int C;
+extern const int E;
 
 #endif

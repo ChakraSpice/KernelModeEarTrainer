@@ -67,7 +67,7 @@ void keyboard_handler(struct regs *r)
     *  set, that means that a key has just been released */
 
     printNumber(scancode);
-
+    puts("\n");
     if (scancode & 0x80)
     {
         /* You can use this one to see if the user released the
@@ -88,6 +88,9 @@ void keyboard_handler(struct regs *r)
         *  held. If shift is held using the larger lookup table,
         *  you would add 128 to the scancode when you look for it */
         putch(kbdus[scancode]);
+      int freqs[4] = {A, E};
+      int lengths[4] = {20000, 20000};
+      playFreqForTime(freqs, lengths, 2, 10000);
     }
 }
 

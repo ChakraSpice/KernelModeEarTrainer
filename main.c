@@ -60,7 +60,7 @@ void main()
     __asm__ __volatile__ ("sti");
 
     puts("Hello Motherfucker!\n");
-    beep();
+    //beep();
 //    i = 10 / 0;
 //    putch(i);
 
