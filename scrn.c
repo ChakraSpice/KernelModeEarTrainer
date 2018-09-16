@@ -119,8 +119,16 @@ void putch(unsigned char c)
     else if(c >= ' ')
     {
         // Capital letters, handling shifts too 
-        if (c >= 'a' && c <= 'z' && keysMask & 0x04 && !(keysMask & 0x02 || keysMask & 0x01))
-            c-= 32;
+        if (c >= 'a' && c <= 'z')
+        { 
+            if (keysMask & 0x04)
+            {
+                if(!(keysMask & 0x02 || keysMask & 0x01))
+                    c-= 32;
+            }
+            else if (keysMask & 0x02 || keysMask & 0x01)
+                c-= 32;
+        }
         where = textmemptr + (csr_y * 80 + csr_x);
         *where = c | att;	/* Character AND attributes: color */
         csr_x++;
