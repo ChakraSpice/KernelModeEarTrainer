@@ -65,5 +65,6 @@ extern void play_sound(int nFrequence);
 extern const int A;
 extern const int C;
 extern const int E;
+extern volatile int keysMask;
 
 #endif
