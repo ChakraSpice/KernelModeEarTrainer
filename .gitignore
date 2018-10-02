@@ -19,5 +19,9 @@
 # xorisso 
 xorriso
 
-#vscode
+# vscode
 .vscode
+
+# compile-script output files
+os.iso
+os.bin
