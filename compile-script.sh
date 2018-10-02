@@ -18,7 +18,8 @@ i686-elf-gcc -c kb.c -o kb.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -w
 i686-elf-gcc -c timer.c -o timer.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -w
 i686-elf-gcc -c scrn.c -o scrn.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -w
 i686-elf-gcc -c pcspeaker.c -o pcspeaker.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -w
-i686-elf-gcc -T linker.ld -o os.bin -ffreestanding -O2 -nostdlib start.o main.o isrs.o irq.o gdt.o idt.o timer.o scrn.o kb.o pcspeaker.o -lgcc
+i686-elf-gcc -c systemtime.c -o systemtime.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra -w
+i686-elf-gcc -T linker.ld -o os.bin -ffreestanding -O2 -nostdlib start.o main.o isrs.o irq.o gdt.o idt.o timer.o scrn.o kb.o pcspeaker.o systemtime.o -lgcc
 grub-file --is-x86-multiboot os.bin
 if grub-file --is-x86-multiboot os.bin; then
   echo multiboot confirmed

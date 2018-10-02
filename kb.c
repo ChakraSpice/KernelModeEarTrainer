@@ -1,15 +1,6 @@
-/* bkerndev - Bran's Kernel Development Tutorial
-*  By:   Brandon F. (friesenb@gmail.com)
-*  Desc: Keyboard driver
-*
-*  Notes: No warranty expressed or implied. Use at own risk. */
 #include "system.h"
+#include <stdarg.h>
 
-/* KBDUS means US Keyboard Layout. This is a scancode table
-*  used to layout a standard US keyboard. I have left some
-*  comments in to give you an idea of what key is what, even
-*  though I set it's array index to 0. You can change that to
-*  whatever you want using a macro, if you wish! */
 unsigned char kbdus[128] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -56,23 +47,109 @@ const int capsLock = 0x04;
 
 volatile int keysMask = 0;
 
+Interval intervals[9] = {
+  { AUDIO_NOTE_A4, AUDIO_NOTE_A4, "u0" },
+  { AUDIO_NOTE_C4, AUDIO_NOTE_E4, "M3" },
+  { AUDIO_NOTE_A4, AUDIO_NOTE_E4, "p5" },
+  { AUDIO_NOTE_A4, AUDIO_NOTE_A5, "o8" },
+  { AUDIO_NOTE_A4, AUDIO_NOTE_B4, "M2" },
+  { AUDIO_NOTE_A4, AUDIO_NOTE_D4, "p4" },
+  { AUDIO_NOTE_E4, AUDIO_NOTE_F4, "m2" },
+  { AUDIO_NOTE_A4, AUDIO_NOTE_F4, "M6" },
+  { AUDIO_NOTE_A4, AUDIO_NOTE_G4, "m7" }
+}; 
+
+int gameRunning = 0;
+
+int intervalIndex = 0;
+int level = 0;
+int maxLevel = 6;
+int baseModulus = 3;
+int playSound = 0;
+
+int score = 0;
+int numberOfTries = 0;
+int currentLevelScore = 0;
+const int nextLevelScore = 10;
+const int wrongAnswerPenalty = 3;
+
+int menuActive = 0;
+int menuOptionIndex = -1;
+int menuOptionMaxIndex = -1;
+
+char* ops[3] = {
+  "Option1\n\0",
+  "Option2\n\0",
+  "Option3\n\0"
+  };
+
+void activateMenu(int argsNumber, ...) {
+  menuActive = 1;
+  menuOptionIndex = 0;
+  menuOptionMaxIndex = argsNumber - 1;
+  
+  va_list argsList;
+  va_start(argsList, argsNumber);
+
+  renderMenu(argsNumber, argsList);
+  
+  va_end(argsList);
+}
+
+void increaseMenuOptionIndex(int argsNumber, ...)
+{
+  if (!menuActive || menuOptionIndex == menuOptionMaxIndex)
+    return;
+  
+  cls();
+  va_list argsList;
+  va_start(argsList, argsNumber);
+  ++menuOptionIndex;
+  renderMenu(argsNumber, argsList);
+}
+
+void decreaseMenuOptionIndex(int argsNumber, ...)
+{
+  if (!menuActive || menuOptionIndex == 0)
+    return;
+
+  cls();
+  va_list argsList;
+  va_start(argsList, argsNumber);
+  --menuOptionIndex;
+  renderMenu(argsNumber, argsList);
+}
+
+void renderMenu(int argsNumber, va_list argsList) 
+{
+  for(int i = 0; i < argsNumber; ++i) {
+    char* textPtr = va_arg(argsList, char*);
+    if (i == menuOptionIndex)
+      putsColor(textPtr, WHITE, BLACK);
+    else
+      puts(textPtr);
+  };
+}
+
+void disableMenu() {
+  cls();
+  menuActive = 0;
+  menuOptionIndex = menuOptionMaxIndex = -1;
+}
+
+void newInterval() 
+{
+  intervalIndex = rand() % (baseModulus + level);
+}
+
 /* Handles the keyboard interrupt */
 void keyboard_handler(struct regs *r)
 {
-    unsigned char scancode;
+    unsigned char scancode = inportb(0x60);
+    char answer[3];
 
-    /* Read from the keyboard's data buffer */
-    scancode = inportb(0x60);
-
-    /* If the top bit of the byte we read from the keyboard is
-    *  set, that means that a key has just been released */
-    // puts("Scan code: ");
-    // printNumber(scancode);
-    // puts("\n");
     if (scancode & 0x80)
     {
-        /* You can use this one to see if the user released the
-        *  shift, alt, or control keys... */
        switch (scancode) {
         // Left Shift
         case 170: 
@@ -87,39 +164,125 @@ void keyboard_handler(struct regs *r)
     else
     {
       switch (scancode) {
+        // Escape key
+        case 1: 
+        disableMenu();
+        // Enter key
+        case 28:
+        if (menuActive) 
+        {
+          int picked = menuOptionIndex;
+          int offset = 0;
+          disableMenu();
+          puts(ops[picked]);
+        }
+
+        if (gameRunning) {
+          memcpy(answer, getCurrentLine(), 3);
+
+          if (!strcmp(answer, intervals[intervalIndex].answer))
+          {
+            puts("\nGreat success!\n");
+            playSound = 1;
+            ++score;
+            ++numberOfTries;
+            if (++currentLevelScore == nextLevelScore) 
+            {
+              currentLevelScore = 0;
+              if (level < maxLevel) 
+              {
+                ++level;
+                puts("Level up!\n");
+              }
+            }
+            newInterval(); 
+          }
+          else {
+            ++numberOfTries;
+            if (currentLevelScore >= wrongAnswerPenalty)
+              currentLevelScore -= wrongAnswerPenalty;
+            puts("\nWrong. Try again. If you wish to play the interval again, press \"a\", if you wish to quit, press \"q\".\n");
+          } 
+        } 
+        else 
+        {
+          if (!strcmp("Start game", getCurrentLine())) {
+            puts("\nGame started! \n To quit, press \"q\".\n To play interval again, press \"a\".\n");
+            puts("Interval codes are:\n");
+            puts("Unison: u0\n");
+            puts("Minor second: m2\n");
+            puts("Major second: M2\n");
+            puts("Minor third: m3\n");
+            puts("Major third: M3\n");
+            puts("Perfect fourth: p4\n");
+            puts("Tritone: tr\n");
+            puts("Perfect fifth: p5\n");
+            puts("Octave: o8\n");
+            gameRunning = 1; 
+            playSound = 1;
+            score = numberOfTries = level = currentLevelScore = 0;
+          }
+        }
+        break;
+
         // Left Shift
         case 42: 
           keysMask |= leftShift;
           break;
+
         // Right shift
         case 54:
           keysMask |= rightShift;
           break;
+
         // Caps Lock
         case 58:
           keysMask ^= capsLock;
           break;
-      }
-        /* Here, a key was just pressed. Please note that if you
-        *  hold a key down, you will get repeated key press
-        *  interrupts. */
 
-        /* Just to show you how this works, we simply translate
-        *  the keyboard scancode into an ASCII value, and then
-        *  display it to the screen. You can get creative and
-        *  use some flags to see if a shift is pressed and use a
-        *  different layout, or you can add another 128 entries
-        *  to the above layout to correspond to 'shift' being
-        *  held. If shift is held using the larger lookup table,
-        *  you would add 128 to the scancode when you look for it */
+        // Up arrow
+        case 72:
+          decreaseMenuOptionIndex(3, "Option1\n", "Option2\n", "Option3\n");
+          break;
+
+        // Left arrow
+        case 75:
+          break;
+
+        // Right arrow
+        case 77:
+          cls();
+          activateMenu(3, "Option1\n", "Option2\n", "Option3\n");
+          break;
+        
+        // Down arrow
+        case 80:
+          increaseMenuOptionIndex(3, "Option1\n", "Option2\n", "Option3\n");
+          break;
+      }
+
       putch(kbdus[scancode]);
-      int freqs[4] = {A, E};
-      int lengths[4] = {20000, 20000};
-      //playFreqForTime(freqs, lengths, 2, 10000);
+      // Play again 
+      if (gameRunning) {
+        if (kbdus[scancode] == 'a') {
+          playSound = 1;
+          puts("\n");
+        }
+        if (kbdus[scancode] == 'q') {
+          gameRunning = 0;
+          puts("\nScore \\ Number of tries: "); printNumber(score); puts(" \\ "); printNumber(numberOfTries); puts("\n");
+          puts("Level: "); printNumber(level); puts("\n");
+          puts("To start the game again, type in \"Start game\".");
+        }
+      }
+      if (playSound)
+      {
+        playSound = 0;  
+        playInterval(intervals[intervalIndex]);
+      }
     }
 }
 
-/* Installs the keyboard handler into IRQ1 */
 void keyboard_install()
 {
     irq_install_handler(1, keyboard_handler);

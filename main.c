@@ -1,8 +1,3 @@
-/* bkerndev - Bran's Kernel Development Tutorial
-*  By:   Brandon F. (friesenb@gmail.com)
-*  Desc: Main.c: C code entry.
-*
-*  Notes: No warranty expressed or implied. Use at own risk. */
 #include "system.h"
 
 void *memcpy(void *dest, const void *src, size_t count)
@@ -34,6 +29,13 @@ size_t strlen(const char *str)
     return retval;
 }
 
+int strcmp(const char* s1, const char* s2)
+{
+    while(*s1 && (*s1==*s2))
+        s1++,s2++;
+    return *(const unsigned char*)s1-*(const unsigned char*)s2;
+}
+
 unsigned char inportb (unsigned short _port)
 {
     unsigned char rv;
@@ -46,6 +48,19 @@ void outportb (unsigned short _port, unsigned char _data)
     __asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
 
+volatile unsigned long int next = 1;
+
+int rand(void) 
+{
+    next = next * 1103515245 + 12345;
+    return (unsigned int)(next / 65536) % 32768;
+}
+// TODO: SEED 
+void srand(unsigned int seed)
+{
+    next = seed;
+}
+
 void main()
 {
     gdt_install();
@@ -56,13 +71,12 @@ void main()
     // Set the freq
     timer_install(100);
     keyboard_install();
-    
+
     __asm__ __volatile__ ("sti");
 
-    puts("Hello Motherfucker!\n");
-    //beep();
-//    i = 10 / 0;
-//    putch(i);
-
+    puts("Welcome to your personal ear trainer!\n");
+    srand(read_seconds());
+    newInterval();
+    puts("\nTo start the game type in \"Start game\"\n.");
     for (;;);
 }

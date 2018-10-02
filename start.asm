@@ -17,7 +17,7 @@ var dw 0
 section .bss
 align 16
 stack_bottom:
-resb 16384 ; 16 KiB
+resb 16384 
 stack_top:
 
 section .text
@@ -33,12 +33,6 @@ _start:
 	jmp .hang
 .end:
 
-
-
-; This will set up our new segment registers. We need to do
-; something special in order to set CS. We do what is called a
-; far jump. A jump that includes a segment as well as an offset.
-; This is declared in C as 'extern void gdt_flush();'
 global _gdt_flush
 extern gp
 _gdt_flush:
@@ -53,16 +47,12 @@ _gdt_flush:
 flush2:
     ret
 
-; Loads the IDT defined in '_idtp' into the processor.
-; This is declared in C as 'extern void idt_load();'
 global _idt_load
 extern idtp
 _idt_load:
     lidt [idtp]
     ret
 
-; In just a few pages in this tutorial, we will add our Interrupt
-; Service Routines (ISRs) right here!
 global _isr0
 global _isr1
 global _isr2
@@ -315,13 +305,8 @@ _isr31:
     jmp isr_common_stub
 
 
-; We call a C function in here. We need to let the assembler know
-; that '_fault_handler' exists in another file
 extern fault_handler
 
-; This is our common ISR stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level fault handler,
-; and finally restores the stack frame.
 isr_common_stub:
     pusha
     push ds
@@ -503,12 +488,3 @@ irq_common_stub:
     popa
     add esp, 8
     iret
-
-; Here is the definition of our BSS section. Right now, we'll use
-; it just to store the stack. Remember that a stack actually grows
-; downwards, so we declare the size of the data before declaring
-; the identifier '_sys_stack'
-SECTION .bss
-    resb 8192               ; This reserves 8KBytes of memory here
-_sys_stack:
-
